@@ -4,7 +4,7 @@
 
 Covers week 1 to the final review on 25 October. Entries are in the order they happened. Each entry records what we expected, what actually happened, why, and what changed in the platform as a result. Entries marked **open** are not fixed.
 
-Referenced from: [PRD v1.1](final/AEL%20Product%20Requirements%20Document%20v1.1%20Group%203.pdf) and [Technical Blueprint v2.1](final/AEL%20Technical%20Blueprint%20v2.1%20Group%203.pdf).
+Referenced from: [PRD v1.1](week-06/AEL%20Product%20Requirements%20Document%20v1.1%20Group%203.pdf) and [Technical Blueprint v2.1](week-06/AEL%20Technical%20Blueprint%20v2.1%20Group%203.pdf).
 
 ---
 
@@ -146,4 +146,3 @@ Three lessons recur across the entries above.
 - **F12, F13, F14:** checked by hand at Verify until fixed in code.
 - **F15:** PDF export shows `!'` for the arrow; use Markdown or Word exports for hand-ins.
 - **Band agreement:** the Tester's own bands for the eight-source comparison behind PRD assumption A3 are to be added to `appraisals/` as evidence.
-
