@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Desk Research Agent — Group 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#FAFBFC;--surface:#FFF;--border:#E2E6EA;--text:#1A1D21;--text2:#5A6370;
+  --accent:#1A56DB;--accent-light:#EBF0FF;
+  --vgood:#0F7B3F;--vgood-bg:#ECFDF3;--good:#1A56DB;--good-bg:#EBF0FF;
+  --weak:#92610E;--weak-bg:#FFF8EB;--reject:#B42318;--reject-bg:#FEF3F2;
+  --mono:'IBM Plex Mono',monospace;--sans:'Inter',system-ui,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111318;--surface:#1A1D24;--border:#2E333B;--text:#E8EAED;--text2:#9DA3AE;
+  --accent:#6B9BFF;--accent-light:#1C2640;
+  --vgood:#34D97B;--vgood-bg:#0D2818;--good:#6B9BFF;--good-bg:#1C2640;
+  --weak:#F5C542;--weak-bg:#2A2008;--reject:#F97066;--reject-bg:#2D1210;
+}}
+:root[data-theme="dark"]{
+  --bg:#111318;--surface:#1A1D24;--border:#2E333B;--text:#E8EAED;--text2:#9DA3AE;
+  --accent:#6B9BFF;--accent-light:#1C2640;
+  --vgood:#34D97B;--vgood-bg:#0D2818;--good:#6B9BFF;--good-bg:#1C2640;
+  --weak:#F5C542;--weak-bg:#2A2008;--reject:#F97066;--reject-bg:#2D1210;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0)}
+*{box-sizing:inherit;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.container{max-width:860px;margin:0 auto;padding:2rem 1.5rem}
+h1{font-size:1.5rem;font-weight:700;margin-bottom:.25rem}
+.subtitle{color:var(--text2);font-size:.875rem;margin-bottom:1.5rem}
+.input-group{margin-bottom:1rem}
+label{display:block;font-size:.8125rem;font-weight:600;margin-bottom:.375rem;color:var(--text2)}
+input,textarea,select{width:100%;padding:.625rem .75rem;border:1px solid var(--border);border-radius:8px;
+  font-family:var(--sans);font-size:.9375rem;background:var(--surface);color:var(--text);outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+.row{display:flex;gap:.75rem;flex-wrap:wrap}
+.row>*{flex:1;min-width:200px}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.625rem 1.25rem;background:var(--accent);
+  color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:.9375rem;font-weight:600;cursor:pointer}
+.btn:hover{opacity:.9}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--border);
+  padding:.5rem 1rem;font-size:.8125rem;border-radius:8px;cursor:pointer;font-family:var(--sans);font-weight:600}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.presets{display:flex;gap:.375rem;flex-wrap:wrap;margin-bottom:1rem}
+.preset{padding:.3rem .6rem;font-size:.75rem;border:1px solid var(--border);border-radius:6px;
+  background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--sans)}
+.preset:hover{border-color:var(--accent);color:var(--accent)}
+.pipeline{margin-top:1.5rem}
+.stage{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.85rem}
+.stage-header{display:flex;align-items:center;gap:.625rem;margin-bottom:.6rem}
+.stage-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;flex-shrink:0}
+.pending{background:var(--border);color:var(--text2)}
+.running{background:var(--accent);color:#fff;animation:pulse 1.5s infinite}
+.done{background:var(--vgood);color:#fff}
+.fail{background:var(--reject);color:#fff}
+.stage-title{font-weight:600;font-size:.9375rem}
+.stage-body{font-size:.8125rem;color:var(--text2);line-height:1.6;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.src{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.75rem}
+.src.excluded{opacity:.6;border-style:dashed}
+.src h4{font-size:.9rem;font-weight:600;margin-bottom:.3rem;line-height:1.4}
+.meta{font-size:.72rem;color:var(--text2);font-family:var(--mono);margin-bottom:.5rem;word-break:break-word}
+.meta a{color:var(--accent);text-decoration:none;word-break:break-all}
+.meta a:hover{text-decoration:underline}
+.meta.links{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center;margin-top:-.25rem}
+.meta.links a{color:var(--accent);font-weight:500;text-decoration:none;white-space:nowrap;
+  border:1px solid var(--border);border-radius:5px;padding:.1rem .4rem}
+.meta.links a:hover{border-color:var(--accent);background:var(--accent-light)}
+.body{font-size:.8125rem;line-height:1.6;margin-bottom:.5rem}
+.verdict{display:inline-block;padding:.15rem .55rem;border-radius:5px;font-size:.72rem;font-weight:700;font-family:var(--mono);white-space:nowrap}
+.v-vgood{background:var(--vgood-bg);color:var(--vgood)}
+.v-good{background:var(--good-bg);color:var(--good)}
+.v-weak{background:var(--weak-bg);color:var(--weak)}
+.v-reject{background:var(--reject-bg);color:var(--reject)}
+.scorebar{display:flex;gap:.3rem;flex-wrap:wrap;margin:.5rem 0}
+.crit{font-size:.7rem;font-family:var(--mono);padding:.15rem .4rem;border-radius:4px;background:var(--accent-light);color:var(--text)}
+.crit.gate-fail{background:var(--reject-bg);color:var(--reject);font-weight:700}
+.flag{font-size:.78rem;padding:.4rem .6rem;border-radius:6px;margin-top:.4rem;line-height:1.5}
+.flag-gate{background:var(--reject-bg);color:var(--reject)}
+.flag-use{background:var(--vgood-bg);color:var(--vgood)}
+.flag-caution{background:var(--weak-bg);color:var(--weak)}
+.summary{background:var(--accent-light);border-radius:8px;padding:1rem;margin:1.5rem 0;font-size:.85rem;line-height:1.65}
+.export-bar{margin-top:1.25rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.export-label{font-size:.78rem;color:var(--text2);font-weight:600;margin-right:.25rem}
+.hidden{display:none}
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+h2{font-size:1.1rem;margin:1.5rem 0 .75rem}
+h3{font-size:.95rem;margin:1.25rem 0 .5rem;color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Desk Research Agent</h1>
+  <p class="subtitle">Group 3 · Retrieve → Appraise · Dutch + English · 100-point rubric with Evidence gate</p>
+
+  <div class="presets" id="presets"></div>
+
+  <div class="input-group">
+    <label>Research topic</label>
+    <input type="text" id="topic" placeholder="e.g. AI scheduling in home care">
+  </div>
+  <div class="row">
+    <div class="input-group">
+      <label>Recency window</label>
+      <select id="recency">
+        <option value="3">Last 3 years (fast-moving: AI tools, vendors)</option>
+        <option value="5" selected>Last 5 years (general)</option>
+        <option value="10">Last 10 years (regulation, statistics)</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Sources to find</label>
+      <select id="count">
+        <option value="6">6</option><option value="8" selected>8</option><option value="10">10</option>
+      </select>
+    </div>
+  </div>
+  <div class="input-group">
+    <label>Context (optional)</label>
+    <textarea id="context" placeholder="Thuiszorg Totaal, ~70 staff, Arnhem. Personal care, individual guidance, dementia support."></textarea>
+  </div>
+  <button class="btn" id="runBtn" onclick="run()"><span id="btnLabel">Run search strategy</span></button>
+
+  <div class="pipeline hidden" id="pipeline">
+    <div class="stage"><div class="stage-header"><div class="stage-num pending" id="s1n">1</div>
+      <div class="stage-title">Retrieve — Dutch + English search terms</div></div>
+      <div class="stage-body" id="s1b"></div></div>
+    <div class="stage"><div class="stage-header"><div class="stage-num pending" id="s2n">2</div>
+      <div class="stage-title">Adopter case hunt — real use, not vendor claims</div></div>
+      <div class="stage-body" id="s2b"></div></div>
+    <div class="stage"><div class="stage-header"><div class="stage-num pending" id="s3n">3</div>
+      <div class="stage-title">Appraise — include/exclude, then score</div></div>
+      <div class="stage-body" id="s3b"></div></div>
+  </div>
+  <div class="hidden" id="results"></div>
+  <div class="export-bar hidden" id="exportBar">
+    <span class="export-label">Export appraisal file:</span>
+    <button class="btn-ghost" id="btnMd" onclick="copyMd()">Copy markdown</button>
+    <button class="btn-ghost" id="btnPdf" onclick="exportPDF()">PDF</button>
+    <button class="btn-ghost" id="btnDocx" onclick="exportDOCX()">Word (.docx)</button>
+  </div>
+</div>
+
+<script>
+const EN_TERMS=["AI scheduling in home care","AI scheduling in healthcare","Automated employee scheduling healthcare",
+"Automatic notifications in home care","AI automation for healthcare SMEs","AI scheduling Netherlands","AI scheduling and GDPR"];
+const NL_TERMS=["AI personeelsplanning in de thuiszorg","Automatische personeelsplanning in de zorg",
+"AI voor thuiszorgorganisaties","Automatische meldingen in de thuiszorg","AI planning in de Nederlandse zorg","AI en AVG in de zorg"];
+
+let sample=null, downloads=null, md="", lastData=null;
+
+(function(){
+  const p=document.getElementById("presets");
+  [...EN_TERMS.slice(0,4),...NL_TERMS.slice(0,3)].forEach(t=>{
+    const b=document.createElement("button");
+    b.className="preset";b.textContent=t;
+    b.onclick=()=>{document.getElementById("topic").value=t};
+    p.appendChild(b);
+  });
+})();
+
+setTimeout(async()=>{
+  try{sample=await window.claude.use("sample")}catch(e){}
+  try{downloads=await window.claude.use("downloads")}catch(e){}
+  if(!sample){
+    document.getElementById("runBtn").disabled=true;
+    document.getElementById("btnLabel").textContent="Unavailable outside Claude";
+  }
+  if(!downloads){
+    document.getElementById("btnPdf").disabled=true;
+    document.getElementById("btnDocx").disabled=true;
+    document.getElementById("btnPdf").title="File saving unavailable in this view";
+    document.getElementById("btnDocx").title="File saving unavailable in this view";
+  }
+  if(typeof window.jspdf==="undefined")document.getElementById("btnPdf").disabled=true;
+  if(typeof window.JSZip==="undefined")document.getElementById("btnDocx").disabled=true;
+},300);
+
+function sn(n,c,t){document.getElementById("s"+n+"n").className="stage-num "+c;
+  if(t!==undefined)document.getElementById("s"+n+"b").textContent=t}
+function sa(n,t){const e=document.getElementById("s"+n+"b");e.textContent+=t;e.scrollTop=e.scrollHeight}
+function esc(s){if(!s)return"";const d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function xesc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;")}
+function parseJSON(txt){const c=txt.replace(/```json|```/g,"").trim();const m=c.match(/\[[\s\S]*\]/);
+  try{return JSON.parse(m?m[0]:c)}catch(e){return null}}
+function band(total,ev){
+  if(ev<15)return{cls:"v-reject",label:"EVIDENCE GATE FAILED"};
+  if(total>=80)return{cls:"v-vgood",label:"Very good"};
+  if(total>=60)return{cls:"v-good",label:"Good"};
+  if(total>=40)return{cls:"v-weak",label:"Weak"};
+  return{cls:"v-reject",label:"Do not use"};
+}
+function cleanDomain(d){
+  if(!d)return"";
+  let x=String(d).trim().toLowerCase()
+    .replace(/^https?:\/\//,"").replace(/^www\./,"").split("/")[0].trim();
+  if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(x))return"";
+  if(x.includes("verify")||x.includes("unknown"))return"";
+  return x;
+}
+function gq(q){return "https://www.google.com/search?q="+encodeURIComponent(q)}
+function scholarq(q){return "https://scholar.google.com/scholar?q="+encodeURIComponent(q)}
+
+// Build the clickable route to a source. No invented URLs: every link is a
+// real, working search that lands the researcher on the source itself.
+function sourceLinks(s){
+  const dom=cleanDomain(s.domain);
+  const q=(s.find_query&&String(s.find_query).trim())||[s.title,s.publisher].filter(Boolean).join(" ");
+  const acad=/academ|journal|paper|study|research|thesis|peer/i.test(s.type||"");
+  let out=[];
+  if(dom) out.push(`<a href="${esc(gq('site:'+dom+' '+q))}" target="_blank" rel="noopener noreferrer">Find on ${esc(dom)}</a>`);
+  out.push(`<a href="${esc(gq(q))}" target="_blank" rel="noopener noreferrer">Web search</a>`);
+  if(acad) out.push(`<a href="${esc(scholarq(q))}" target="_blank" rel="noopener noreferrer">Scholar</a>`);
+  if(dom) out.push(`<a href="https://${esc(dom)}" target="_blank" rel="noopener noreferrer">${esc(dom)}</a>`);
+  return out.join(' <span style="opacity:.4">·</span> ');
+}
+function sourceLinksPlain(s){
+  const dom=cleanDomain(s.domain);
+  const q=(s.find_query&&String(s.find_query).trim())||[s.title,s.publisher].filter(Boolean).join(" ");
+  let out=[];
+  if(dom)out.push("Find on "+dom+": "+gq("site:"+dom+" "+q));
+  out.push("Web search: "+gq(q));
+  return out;
+}
+
+async function run(){
+  const topic=document.getElementById("topic").value.trim();
+  if(!topic)return alert("Enter a research topic");
+  const ctx=document.getElementById("context").value.trim();
+  const yrs=document.getElementById("recency").value;
+  const cnt=document.getElementById("count").value;
+  const btn=document.getElementById("runBtn");
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Running…';
+  document.getElementById("pipeline").classList.remove("hidden");
+  document.getElementById("results").classList.add("hidden");
+  document.getElementById("exportBar").classList.add("hidden");
+  sn(1,"running","");sn(2,"pending","");sn(3,"pending","");
+
+  const ctxLine=ctx?`\n\nProject context: ${ctx}`:"\n\nProject context: Thuiszorg Totaal, a small home-care provider in Arnhem (~70 staff), personal care / individual guidance / dementia support. Researching whether AI could help notify clients in advance of caregiver visits.";
+  let sources=[], adopter=null;
+
+  try{
+    const r=await sample(
+`You are the Retrieve stage of Group 3's desk research platform, researching AI for Dutch home care.
+
+Search in BOTH English and Dutch. Our strategy's term lists:
+English: ${EN_TERMS.join("; ")}
+Dutch: ${NL_TERMS.join("; ")}
+
+Adapt these to the topic below. Dutch searching matters because Dutch regulations, Dutch home-care organisations and local examples do not surface in English-only searches.
+
+Find ${cnt} sources. Recency window: prefer the last ${yrs} years. Prioritise: official statistics (CBS), standards bodies (NEN), sector bodies (ActiZ), regulators (Autoriteit Persoonsgegevens), academic work, government publications, then trade press, then vendor material LAST and clearly marked.
+
+IMPORTANT — do NOT invent URLs. You cannot browse, so a full URL would be a guess. Instead give:
+- "domain": the publisher's real domain only, which you do know (e.g. "cbs.nl", "nen.nl", "actiz.nl", "autoriteitpersoonsgegevens.nl", "rijksoverheid.nl", "zorgvisie.nl", "skipr.nl", "nedap-ons.nl"). Leave "" if genuinely unsure.
+- "find_query": the exact phrase a researcher should search to land on this source (title plus publisher, in the source's own language).
+
+Respond ONLY with a JSON array:
+[{"title":"","publisher":"","domain":"","find_query":"","language":"nl","type":"","year":"","snippet":"","search_term":""}]
+
+Topic: ${topic}${ctxLine}`,
+      {onText:({delta})=>sa(1,delta)}
+    );
+    sources=parseJSON(r.text)||[];
+    const nl=sources.filter(s=>s.language==="nl").length;
+    sn(1,"done",`${sources.length} sources — ${nl} Dutch, ${sources.length-nl} English`);
+  }catch(e){sn(1,"fail","Error: "+e.message);return finish()}
+
+  sn(2,"running","Looking for a documented real-world adopter…");
+  try{
+    const r=await sample(
+`You are the adopter-case hunt in Group 3's search strategy. Our rule: research is NOT complete if we only have vendor claims. Find at least one documented case of a comparable healthcare or home-care organisation that ACTUALLY USED a similar scheduling or notification system — and report honestly if none exists.
+
+Topic: ${topic}${ctxLine}
+
+Look for case studies, evaluation reports, sector-press accounts, academic evaluations, pilot reports — from the organisation's side, not the vendor's.
+
+Do NOT invent URLs. Give "domain" (publisher's real domain, or "") and "find_query" (the exact phrase to search to find it).
+
+Respond ONLY with JSON:
+{"found": true,
+ "cases": [{"organisation":"","country":"","system_used":"","what_happened":"","source":"","domain":"","find_query":"","source_type":"","is_vendor_published": false}],
+ "honest_limitation": "If found=false, the limitation sentence the handbook must state. If found=true but only vendor-published, say so."}`,
+      {onText:({delta})=>sa(2,delta)}
+    );
+    const c=r.text.replace(/```json|```/g,"").trim();
+    const m=c.match(/\{[\s\S]*\}/);
+    try{adopter=JSON.parse(m?m[0]:c)}catch(e){adopter=null}
+    sn(2,"done",adopter?(adopter.found?`Found ${(adopter.cases||[]).length} candidate case(s).`:"No documented adopter case found — this is itself a finding."):"Could not parse result.");
+  }catch(e){sn(2,"fail","Error: "+e.message)}
+
+  sn(3,"running",`Appraising ${sources.length} sources…`);
+  try{
+    const r=await sample(
+`You are the Appraise stage of Group 3's platform. Apply our search strategy exactly, in two steps.
+
+STEP 1 — INCLUDE / EXCLUDE. Exclude when: not relevant; author/organisation cannot be identified; original information cannot be found; important claims without evidence; outdated for the topic (window: ${yrs} years); or mainly advertising a product without supporting evidence.
+
+STEP 2 — SCORE included sources on 100 points:
+- Relevance /25: directly about AI, scheduling, notifications or home care?
+- Reliability /20: author/publisher identified? expertise? organisation type? original publication verifiable?
+- Evidence /30: research, data, references or a documented case?
+- Recency /10: recent enough for this topic?
+- Context /15: relevant to healthcare, home care, SMEs, Netherlands or Europe?
+
+EVIDENCE GATE: under 15/30 on Evidence means the source CANNOT be classified good or very good, whatever its total. A vendor page may score 76/100 and still fail. Such a source explains what a product does, never that it works.
+
+Bands (only if the gate passes): 80-100 very good, 60-79 good, 40-59 weak, under 40 do not use.
+
+Respond ONLY with a JSON array:
+[{"title":"","included":true,"exclusion_reason":"","relevance":0,"reliability":0,"evidence":0,"recency":0,"context":0,"total":0,"evidence_gate_passed":true,"explanation":"","use_for":"","not_for":""}]
+
+Sources:
+${JSON.stringify(sources.map(s=>({title:s.title,publisher:s.publisher,type:s.type,year:s.year,language:s.language,snippet:s.snippet})))}`,
+      {onText:({delta})=>sa(3,delta)}
+    );
+    const appr=parseJSON(r.text)||[];
+    for(const a of appr){
+      const s=sources.find(x=>x.title===a.title)||sources.find(x=>a.title&&x.title&&x.title.toLowerCase().includes(a.title.toLowerCase().slice(0,25)));
+      if(s)Object.assign(s,a);
+    }
+    const inc=sources.filter(s=>s.included!==false).length;
+    const gated=sources.filter(s=>s.evidence_gate_passed===false||(s.evidence||0)<15).length;
+    sn(3,"done",`${inc} included, ${sources.length-inc} excluded. ${gated} failed the Evidence gate.`);
+  }catch(e){sn(3,"fail","Error: "+e.message)}
+
+  render(sources,adopter,topic);
+  finish();
+}
+
+function finish(){const b=document.getElementById("runBtn");b.disabled=false;b.innerHTML='<span id="btnLabel">Run again</span>'}
+
+function render(sources,adopter,topic){
+  const c=document.getElementById("results");
+  c.classList.remove("hidden");
+  document.getElementById("exportBar").classList.remove("hidden");
+
+  const included=sources.filter(s=>s.included!==false);
+  const excluded=sources.filter(s=>s.included===false);
+  included.sort((a,b)=>(b.total||0)-(a.total||0));
+  const usable=included.filter(s=>(s.evidence||0)>=15&&(s.total||0)>=60);
+  lastData={sources,adopter,topic,included,excluded,usable};
+
+  let h=`<h2>Results: ${esc(topic)}</h2>`;
+  h+=`<div class="summary"><strong>${included.length} included, ${excluded.length} excluded.</strong> ${usable.length} source(s) rated good or very good and passed the Evidence gate.`;
+  if(adopter){
+    h+=`<br><br><strong>Adopter case:</strong> `;
+    if(adopter.found&&(adopter.cases||[]).length){
+      const vendorOnly=(adopter.cases||[]).every(x=>x.is_vendor_published);
+      h+=vendorOnly?`Only vendor-published cases found — under our strategy this does not count as independent evidence.`:`${adopter.cases.length} documented case(s) found.`;
+    } else h+=`None found. ${esc(adopter.honest_limitation||"This limitation must be stated in the chapter rather than presenting vendor claims as proven.")}`;
+  }
+  h+=`</div>`;
+
+  if(adopter&&adopter.found&&(adopter.cases||[]).length){
+    h+=`<h3>Documented adopter cases</h3>`;
+    for(const x of adopter.cases){
+      h+=`<div class="src"><h4>${esc(x.organisation||"Unnamed")} ${x.is_vendor_published?'<span class="verdict v-weak">vendor-published</span>':'<span class="verdict v-vgood">independent</span>'}</h4>
+      <div class="meta">${esc(x.country||"")} · ${esc(x.system_used||"")} · ${esc(x.source_type||"")}</div>
+      <div class="body">${esc(x.what_happened||"")}</div>
+      <div class="meta">${esc(x.source||"")}</div>
+      <div class="meta links">${sourceLinks({domain:x.domain,find_query:x.find_query,title:x.organisation,publisher:x.source})}</div></div>`;
+    }
+  }
+
+  h+=`<h3>Appraised sources</h3>`;
+  for(const s of included){
+    const ev=s.evidence||0, tot=s.total||0, bd=band(tot,ev);
+    h+=`<div class="src">
+      <h4>${esc(s.title)} <span class="verdict ${bd.cls}">${tot}/100 · ${bd.label}</span></h4>
+      <div class="meta">${esc(s.publisher||"")} · ${esc(s.type||"")} · ${s.language==="nl"?"Dutch":"English"} · ${esc(String(s.year||""))}${s.search_term?" · found via: "+esc(s.search_term):""}</div>
+      <div class="meta links">${sourceLinks(s)}</div>
+      <div class="body">${esc(s.snippet||"")}</div>
+      <div class="scorebar">
+        <span class="crit">Rel ${s.relevance||0}/25</span>
+        <span class="crit">Reli ${s.reliability||0}/20</span>
+        <span class="crit ${ev<15?"gate-fail":""}">Evid ${ev}/30</span>
+        <span class="crit">Rec ${s.recency||0}/10</span>
+        <span class="crit">Ctx ${s.context||0}/15</span>
+      </div>
+      ${ev<15?`<div class="flag flag-gate"><strong>Evidence gate failed (${ev}/30).</strong> Total of ${tot} does not make this a good source. Usable to describe what the product or service is — never as evidence it works.</div>`:""}
+      ${s.explanation?`<div class="body" style="margin-top:.4rem">${esc(s.explanation)}</div>`:""}
+      ${s.use_for?`<div class="flag flag-use"><strong>Use for:</strong> ${esc(s.use_for)}</div>`:""}
+      ${s.not_for?`<div class="flag flag-caution"><strong>Not for:</strong> ${esc(s.not_for)}</div>`:""}
+    </div>`;
+  }
+
+  if(excluded.length){
+    h+=`<h3>Excluded at selection</h3>`;
+    for(const s of excluded){
+      h+=`<div class="src excluded"><h4>${esc(s.title)} <span class="verdict v-reject">excluded</span></h4>
+      <div class="meta">${esc(s.publisher||"")} · ${esc(s.type||"")}</div>
+      <div class="meta links">${sourceLinks(s)}</div>
+      <div class="body"><strong>Reason:</strong> ${esc(s.exclusion_reason||"Did not meet inclusion criteria")}</div></div>`;
+    }
+  }
+  c.innerHTML=h;
+  buildMd();
+}
+
+function buildMd(){
+  const{adopter,topic,included,excluded}=lastData;
+  md=`# Appraisal file: ${topic}\n\nGroup 3 Desk Research Agent · Retrieve -> Appraise. Human review still required.\n\n`;
+  md+=`## Summary\n\n${included.length} included, ${excluded.length} excluded at selection.\n\n`;
+  if(adopter){
+    md+=`**Adopter case:** `;
+    if(adopter.found&&(adopter.cases||[]).length){
+      md+=`${adopter.cases.length} candidate(s) found.\n\n`;
+      for(const x of adopter.cases)
+        md+=`- **${x.organisation}** (${x.country||"?"}) — ${x.system_used||""}. ${x.what_happened||""} Source: ${x.source||"?"}${x.is_vendor_published?" **[vendor-published — not independent evidence]**":""}\n  - ${sourceLinksPlain({domain:x.domain,find_query:x.find_query,title:x.organisation,publisher:x.source}).join("\n  - ")}\n`;
+      md+=`\n`;
+    } else md+=`None found.\n\n> ${adopter.honest_limitation||"No documented case of a comparable provider using a similar system was found. This limitation must be stated in the chapter."}\n\n`;
+  }
+  md+=`## Scores\n\n| Source | Lang | Rel /25 | Reli /20 | Evid /30 | Rec /10 | Ctx /15 | Total | Verdict |\n|---|---|---|---|---|---|---|---|---|\n`;
+  for(const s of included){
+    const bd=band(s.total||0,s.evidence||0);
+    md+=`| ${s.title} | ${s.language==="nl"?"NL":"EN"} | ${s.relevance||0} | ${s.reliability||0} | ${s.evidence||0} | ${s.recency||0} | ${s.context||0} | ${s.total||0} | ${bd.label} |\n`;
+  }
+  md+=`\n## Detail\n\n`;
+  for(const s of included){
+    const bd=band(s.total||0,s.evidence||0);
+    md+=`### ${s.title}\n**${s.total||0}/100 — ${bd.label}**\n\n`;
+    md+=`- Publisher: ${s.publisher||"?"} · Type: ${s.type||"?"} · Year: ${s.year||"?"} · Language: ${s.language==="nl"?"Dutch":"English"}\n`;
+    for(const L of sourceLinksPlain(s))md+=`- ${L}\n`;
+    if(s.search_term)md+=`- Found via: ${s.search_term}\n`;
+    md+=`\n${s.snippet||""}\n\n`;
+    if((s.evidence||0)<15)md+=`> **Evidence gate failed (${s.evidence||0}/30).** Cannot be classified good or very good. Use to describe the product or service only, never as evidence it works.\n\n`;
+    if(s.explanation)md+=`**Scoring rationale:** ${s.explanation}\n\n`;
+    if(s.use_for)md+=`**Use for:** ${s.use_for}\n\n`;
+    if(s.not_for)md+=`**Not for:** ${s.not_for}\n\n`;
+    md+=`---\n\n`;
+  }
+  if(excluded.length){
+    md+=`## Excluded at selection\n\n`;
+    for(const s of excluded)md+=`- **${s.title}** (${s.publisher||"?"}) — ${s.exclusion_reason||"did not meet inclusion criteria"}\n`;
+  }
+}
+
+function copyMd(){
+  navigator.clipboard.writeText(md).then(()=>{
+    const b=document.getElementById("btnMd");
+    const o=b.textContent;b.textContent="Copied!";setTimeout(()=>b.textContent=o,1500);
+  });
+}
+
+function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"appraisal"}
+
+// ─────────── PDF ───────────
+async function exportPDF(){
+  if(!lastData||!downloads)return;
+  const btn=document.getElementById("btnPdf");
+  const orig=btn.textContent;btn.textContent="Building…";btn.disabled=true;
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:"pt",format:"a4"});
+    const M=48, W=595-M*2; let y=M;
+    const {adopter,topic,included,excluded}=lastData;
+
+    function nl(h){if(y+h>842-M){doc.addPage();y=M}}
+    function txt(str,size,style,color,indent){
+      doc.setFont("helvetica",style||"normal");doc.setFontSize(size||10);
+      doc.setTextColor(color||"#1A1D21");
+      const lines=doc.splitTextToSize(String(str||""),W-(indent||0));
+      for(const l of lines){nl(size*1.35);doc.text(l,M+(indent||0),y);y+=size*1.35}
+    }
+    function gap(h){y+=h||8}
+    function rule(){nl(10);doc.setDrawColor("#E2E6EA");doc.line(M,y,M+W,y);y+=10}
+
+    txt("Appraisal file: "+topic,17,"bold");gap(2);
+    txt("Group 3 Desk Research Agent · Retrieve → Appraise · Human review still required",9,"normal","#5A6370");
+    gap(6);rule();
+
+    txt("Summary",13,"bold");gap(3);
+    txt(`${included.length} included, ${excluded.length} excluded at selection. ${lastData.usable.length} rated good or very good and passed the Evidence gate.`,10);
+    gap(5);
+    if(adopter){
+      txt("Adopter case",11,"bold");gap(2);
+      if(adopter.found&&(adopter.cases||[]).length){
+        for(const x of adopter.cases){
+          txt(`• ${x.organisation||"Unnamed"} (${x.country||"?"}) — ${x.system_used||""}${x.is_vendor_published?"  [vendor-published, not independent evidence]":"  [independent]"}`,10,"bold");
+          txt(x.what_happened||"",10,"normal","#1A1D21",14);
+          if(x.source)txt("Source: "+x.source,9,"normal","#5A6370",14);
+          for(const L of sourceLinksPlain({domain:x.domain,find_query:x.find_query,title:x.organisation,publisher:x.source}))txt(L,8.5,"normal","#1A56DB",14);
+          gap(4);
+        }
+      } else {
+        txt("None found.",10,"bold","#B42318");
+        txt(adopter.honest_limitation||"No documented case of a comparable provider using a similar system was found. This limitation must be stated in the chapter rather than presenting vendor claims as proven.",10,"italic","#B42318");
+      }
+    }
+    gap(6);rule();
+
+    txt("Scores",13,"bold");gap(6);
+    const cols=[168,32,34,34,34,32,32,38,80];
+    const hdr=["Source","Lang","Rel","Reli","Evid","Rec","Ctx","Total","Verdict"];
+    function rowLine(vals,bold,colorIdx){
+      nl(16);
+      doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(8);
+      let x=M;
+      vals.forEach((v,i)=>{
+        if(colorIdx&&i===colorIdx.i)doc.setTextColor(colorIdx.c);else doc.setTextColor("#1A1D21");
+        const t=doc.splitTextToSize(String(v),cols[i]-4)[0]||"";
+        doc.text(t,x,y);x+=cols[i];
+      });
+      doc.setTextColor("#1A1D21");y+=14;
+    }
+    rowLine(hdr,true);
+    doc.setDrawColor("#E2E6EA");doc.line(M,y-9,M+W,y-9);
+    for(const s of included){
+      const bd=band(s.total||0,s.evidence||0);
+      const gateFail=(s.evidence||0)<15;
+      rowLine([s.title,s.language==="nl"?"NL":"EN",s.relevance||0,s.reliability||0,s.evidence||0,s.recency||0,s.context||0,s.total||0,bd.label],
+        false, gateFail?{i:4,c:"#B42318"}:null);
+    }
+    gap(8);rule();
+
+    txt("Detail",13,"bold");gap(4);
+    for(const s of included){
+      const bd=band(s.total||0,s.evidence||0);
+      nl(40);
+      txt(s.title,11,"bold");
+      txt(`${s.total||0}/100 — ${bd.label}`,10,"bold",(s.evidence||0)<15?"#B42318":"#0F7B3F");
+      txt(`${s.publisher||"?"} · ${s.type||"?"} · ${s.year||"?"} · ${s.language==="nl"?"Dutch":"English"}`,9,"normal","#5A6370");
+      for(const L of sourceLinksPlain(s))txt(L,8.5,"normal","#1A56DB");
+      if(s.search_term)txt("Found via: "+s.search_term,9,"normal","#5A6370");
+      gap(3);
+      txt(s.snippet||"",10);
+      if((s.evidence||0)<15){gap(3);txt(`Evidence gate failed (${s.evidence||0}/30). Total of ${s.total||0} does not make this a good source. Usable to describe what the product or service is — never as evidence it works.`,9.5,"italic","#B42318")}
+      if(s.explanation){gap(3);txt("Scoring rationale: "+s.explanation,9.5)}
+      if(s.use_for){gap(2);txt("Use for: "+s.use_for,9.5,"normal","#0F7B3F")}
+      if(s.not_for){gap(2);txt("Not for: "+s.not_for,9.5,"normal","#92610E")}
+      gap(6);rule();
+    }
+    if(excluded.length){
+      txt("Excluded at selection",13,"bold");gap(4);
+      for(const s of excluded){
+        txt("• "+s.title+" ("+(s.publisher||"?")+")",10,"bold");
+        txt(s.exclusion_reason||"Did not meet inclusion criteria",9.5,"normal","#5A6370",14);
+        gap(3);
+      }
+    }
+    const blob=doc.output("blob");
+    await downloads.save({filename:"appraisal-"+slug(topic)+".pdf",data:blob});
+  }catch(e){
+    if(e&&e.code!=="declined")alert("PDF export failed: "+(e.message||e.code||e));
+  }
+  btn.textContent=orig;btn.disabled=false;
+}
+
+// ─────────── DOCX ───────────
+async function exportDOCX(){
+  if(!lastData||!downloads)return;
+  const btn=document.getElementById("btnDocx");
+  const orig=btn.textContent;btn.textContent="Building…";btn.disabled=true;
+  try{
+    const{adopter,topic,included,excluded}=lastData;
+    let b=[];
+    const P=(text,o)=>{
+      o=o||{};
+      const runs=(Array.isArray(text)?text:[{t:text}]).map(r=>
+        `<w:r><w:rPr>${(r.b||o.b)?"<w:b/>":""}${(r.i||o.i)?"<w:i/>":""}<w:sz w:val="${(r.sz||o.sz||20)}"/><w:szCs w:val="${(r.sz||o.sz||20)}"/>${(r.c||o.c)?`<w:color w:val="${(r.c||o.c)}"/>`:""}<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr><w:t xml:space="preserve">${xesc(r.t)}</w:t></w:r>`
+      ).join("");
+      b.push(`<w:p><w:pPr><w:spacing w:after="${o.after||100}"/>${o.center?'<w:jc w:val="center"/>':""}</w:pPr>${runs}</w:p>`);
+    };
+    const H=(t,sz)=>P(t,{b:true,sz:sz||28,after:120});
+
+    H("Appraisal file: "+topic,32);
+    P("Group 3 Desk Research Agent · Retrieve → Appraise · Human review still required",{i:true,sz:18,c:"5A6370",after:200});
+
+    H("Summary",26);
+    P(`${included.length} included, ${excluded.length} excluded at selection. ${lastData.usable.length} rated good or very good and passed the Evidence gate.`);
+
+    if(adopter){
+      H("Adopter case",24);
+      if(adopter.found&&(adopter.cases||[]).length){
+        for(const x of adopter.cases){
+          P([{t:(x.organisation||"Unnamed")+" ",b:true},{t:`(${x.country||"?"}) — ${x.system_used||""}`},
+             {t:x.is_vendor_published?"  [vendor-published, not independent evidence]":"  [independent]",b:true,c:x.is_vendor_published?"92610E":"0F7B3F"}]);
+          P(x.what_happened||"",{after:60});
+          if(x.source)P("Source: "+x.source,{sz:18,c:"5A6370",after:20});
+          for(const L of sourceLinksPlain({domain:x.domain,find_query:x.find_query,title:x.organisation,publisher:x.source}))P(L,{sz:16,c:"1A56DB",after:140});
+        }
+      } else {
+        P("None found.",{b:true,c:"B42318"});
+        P(adopter.honest_limitation||"No documented case of a comparable provider using a similar system was found. This limitation must be stated in the chapter rather than presenting vendor claims as proven.",{i:true,c:"B42318"});
+      }
+    }
+
+    // Score table
+    H("Scores",26);
+    const cw=[3000,700,700,750,750,700,700,750,1600];
+    const tc=(txt,o)=>{o=o||{};return `<w:tc><w:tcPr><w:tcW w:w="${o.w}" w:type="dxa"/>${o.shade?`<w:shd w:val="clear" w:fill="${o.shade}"/>`:""}</w:tcPr><w:p><w:pPr><w:spacing w:after="0"/></w:pPr><w:r><w:rPr>${o.b?"<w:b/>":""}<w:sz w:val="16"/>${o.c?`<w:color w:val="${o.c}"/>`:""}${o.white?'<w:color w:val="FFFFFF"/>':""}<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr><w:t xml:space="preserve">${xesc(txt)}</w:t></w:r></w:p></w:tc>`};
+    let rows=`<w:tr>`+["Source","Lang","Rel /25","Reli /20","Evid /30","Rec /10","Ctx /15","Total","Verdict"]
+      .map((h,i)=>tc(h,{w:cw[i],b:true,white:true,shade:"2B3A4A"})).join("")+`</w:tr>`;
+    included.forEach((s,idx)=>{
+      const bd=band(s.total||0,s.evidence||0), gf=(s.evidence||0)<15, sh=idx%2?"F2F4F6":null;
+      rows+=`<w:tr>`+[
+        [s.title,{}],[s.language==="nl"?"NL":"EN",{}],[String(s.relevance||0),{}],[String(s.reliability||0),{}],
+        [String(s.evidence||0),{c:gf?"B42318":null,b:gf}],[String(s.recency||0),{}],[String(s.context||0),{}],
+        [String(s.total||0),{b:true}],[bd.label,{c:gf?"B42318":null,b:gf}]
+      ].map((x,i)=>tc(x[0],Object.assign({w:cw[i],shade:sh},x[1]))).join("")+`</w:tr>`;
+    });
+    b.push(`<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:tblBorders>
+      <w:top w:val="single" w:sz="4" w:color="D0D5DD"/><w:left w:val="single" w:sz="4" w:color="D0D5DD"/>
+      <w:bottom w:val="single" w:sz="4" w:color="D0D5DD"/><w:right w:val="single" w:sz="4" w:color="D0D5DD"/>
+      <w:insideH w:val="single" w:sz="4" w:color="D0D5DD"/><w:insideV w:val="single" w:sz="4" w:color="D0D5DD"/>
+    </w:tblBorders></w:tblPr>${rows}</w:tbl><w:p><w:pPr><w:spacing w:after="160"/></w:pPr></w:p>`);
+
+    H("Detail",26);
+    for(const s of included){
+      const bd=band(s.total||0,s.evidence||0), gf=(s.evidence||0)<15;
+      P(s.title,{b:true,sz:24,after:40});
+      P(`${s.total||0}/100 — ${bd.label}`,{b:true,c:gf?"B42318":"0F7B3F",after:40});
+      P(`${s.publisher||"?"} · ${s.type||"?"} · ${s.year||"?"} · ${s.language==="nl"?"Dutch":"English"}`,{sz:18,c:"5A6370",after:40});
+      for(const L of sourceLinksPlain(s))P(L,{sz:16,c:"1A56DB",after:20});
+      if(s.search_term)P("Found via: "+s.search_term,{sz:18,c:"5A6370",after:60});
+      P(s.snippet||"");
+      if(gf)P(`Evidence gate failed (${s.evidence||0}/30). Total of ${s.total||0} does not make this a good source. Usable to describe what the product or service is — never as evidence it works.`,{i:true,c:"B42318"});
+      if(s.explanation)P([{t:"Scoring rationale: ",b:true},{t:s.explanation}]);
+      if(s.use_for)P([{t:"Use for: ",b:true},{t:s.use_for}],{c:"0F7B3F"});
+      if(s.not_for)P([{t:"Not for: ",b:true},{t:s.not_for}],{c:"92610E"});
+      b.push(`<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="4" w:color="E2E6EA"/></w:pBdr><w:spacing w:after="160"/></w:pPr></w:p>`);
+    }
+    if(excluded.length){
+      H("Excluded at selection",26);
+      for(const s of excluded){
+        P([{t:s.title,b:true},{t:" ("+(s.publisher||"?")+")"}],{after:40});
+        P(s.exclusion_reason||"Did not meet inclusion criteria",{sz:18,c:"5A6370",after:120});
+      }
+    }
+
+    const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${b.join("")}
+<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>`;
+
+    const zip=new JSZip();
+    zip.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+    zip.folder("_rels").file(".rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+    const w=zip.folder("word");
+    w.file("document.xml",docXml);
+    w.folder("_rels").file("document.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
+
+    const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+    await downloads.save({filename:"appraisal-"+slug(topic)+".docx",data:blob});
+  }catch(e){
+    if(e&&e.code!=="declined")alert("Word export failed: "+(e.message||e.code||e));
+  }
+  btn.textContent=orig;btn.disabled=false;
+}
+</script>
+</body>
+</html>
