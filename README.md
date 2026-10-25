@@ -10,12 +10,13 @@ HAN minor *Data Driven Decision Making in Business* · AIBS (research) and AEL (
 
 | What | Where |
 |---|---|
-| Final PRD and Technical Blueprint | [`final/`](final/) |
+| Final PRD v1.1 and Technical Blueprint v2.1 | [`week-06/`](week-06/) |
 | Handbook, four themes (latest version, 9 October) | [`week-05/AIBS_Handbook_Team3_0910.pdf`](week-05/AIBS_Handbook_Team3_0910.pdf) |
-| Desk Research Agent: link, code, prompts, how to run | [`agent/`](agent/) |
+| Desk Research Agent: link, prompts and rubric, how to run | [`agent/`](agent/) |
 | LLM wiki | [`wiki/`](wiki/) |
 | Appraisal files (one per agent run) | [`appraisals/`](appraisals/) |
 | Failure log, week 1 to the final review (F1–F15) | [`failure-log.md`](failure-log.md) |
+| Individual portfolios (all five team members) | [`Individual Portfolios/`](Individual%20Portfolios/) |
 
 ## Folders
 
@@ -25,8 +26,9 @@ HAN minor *Data Driven Decision Making in Business* · AIBS (research) and AEL (
 | `week-02/` | PRD, technical blueprint, research proposal, handbook, search strategy v1 |
 | `week-03/` | Handbook (Theme 1 + Theme 2), search strategy v2, interview guide, updated PRD |
 | `week-05/` | Handbook with all four themes (versions of 8 and 9 October) |
-| `final/` | PRD v1.1 and Technical Blueprint v2.1 (25 October), Word and PDF |
-| `agent/` | Desk Research Agent: published page code, prompts and rubric, run guide |
+| `week-06/` | Final documents: PRD v1.1 and Technical Blueprint v2.1 (25 October), Word and PDF |
+| `Individual Portfolios/` | The five individual portfolios (Word): Anisah, Tanishq, Nikola, Tanjin, Valentina |
+| `agent/` | Desk Research Agent: link to the published page, prompts and rubric, run guide |
 | `wiki/` | LLM wiki files and status |
 | `appraisals/` | Exported, verified appraisal files with naming rule |
 
