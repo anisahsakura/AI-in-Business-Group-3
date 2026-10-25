@@ -5,7 +5,7 @@ Group 3's source-gathering and appraisal tool: **Retrieve → Adopter-case hunt 
 - **Run it:** [claude.ai/artifact/91rBNEMcY5xrnnbCr3Mw13](https://claude.ai/artifact/91rBNEMcY5xrnnbCr3Mw13)
 - **Code:** [`desk-research-agent.html`](desk-research-agent.html), a copy of the agent's code taken on 25 October 2026. If the published page is changed, replace this copy and `prompts.md` in the same commit.
 - **Prompts and rubric:** [`prompts.md`](prompts.md)
-- **Design:** Technical Blueprint v2.1 and PRD v1.1 in [`../final/`](../final/)
+- **Design:** Technical Blueprint v2.1 and PRD v1.1 in [`../week-06/`](../week-06/)
 - **What went wrong while building it:** [`../failure-log.md`](../failure-log.md)
 
 ## How to run it
